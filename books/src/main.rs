@@ -83,13 +83,22 @@ impl Library {
     fn sent(&self) -> &[usize] {
         &self.sent
     }
+
+    fn books(&self) -> &[usize] {
+        &self.books
+    }
 }
 
-fn signup_one_lib(libraries: &mut Vec<Library>) -> Option<usize> {
+fn signup_one_lib(libraries: &mut Vec<Library>, scanned: &HashSet<usize>) -> Option<usize> {
     for library in libraries {
         if library.state() == State::NeedsSignUp {
-            library.signup();
-            return Some(library.index());
+            for book in library.books() {
+                if !scanned.contains(book) {
+                    // Signup only when the library has a book that has not yet been scanned.
+                    library.signup();
+                    return Some(library.index());
+                }
+            }
         }
     }
     return None;
@@ -203,7 +212,7 @@ fn main() {
 
     let mut signed: Vec<usize> = Vec::new();
     for _ in 0..d {
-        if let Some(idx) = signup_one_lib(&mut libraries) {
+        if let Some(idx) = signup_one_lib(&mut libraries, &scanned) {
             signed.push(idx);
         }
 
@@ -217,17 +226,19 @@ fn main() {
     for idx in signed {
         for library in &libraries {
             if library.index() == idx {
-                println!("{} {}", idx, library.sent().len());
+                if library.sent().len() > 0 {
+                    println!("{} {}", idx, library.sent().len());
 
-                println!(
-                    "{}",
-                    library
-                        .sent()
-                        .iter()
-                        .map(|n| n.to_string())
-                        .collect::<Vec<String>>()
-                        .join(" ")
-                );
+                    println!(
+                        "{}",
+                        library
+                            .sent()
+                            .iter()
+                            .map(|n| n.to_string())
+                            .collect::<Vec<String>>()
+                            .join(" ")
+                    );
+                }
             }
         }
     }
