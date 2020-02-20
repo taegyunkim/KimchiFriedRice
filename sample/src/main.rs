@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::BufReader; // 1.2.7
+use std::io::BufReader;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -32,20 +32,77 @@ fn main() {
     println!("{} {}", m, n);
 
     // A hash map of number of slices to the type indices
-    let mut selected_types: HashMap<u32, Vec<usize>> = HashMap::new();
-    let mut types_selected = 0;
+    let mut sizes_to_indices: HashMap<u32, Vec<usize>> = HashMap::new();
     let mut total_slices = 0;
+    let mut largest = 0;
 
     let mut buf = vec![];
-    for type_idx in 0..n {
+    for idx in 0..n as usize {
         let _num_bytes = f.read_until(b' ', &mut buf).unwrap();
-        let num_slices = std::str::from_utf8(&buf)
+        let slices = std::str::from_utf8(&buf)
             .unwrap()
             .trim()
             .parse::<u32>()
             .unwrap();
         #[cfg(debug_assertions)]
-        println!("{}", num_slices);
+        println!("{}", slices);
         buf.clear();
+        if total_slices + slices <= m {
+            total_slices += slices;
+            #[cfg(debug_assertions)]
+            println!("adding {}", slices);
+
+            if let Some(indices) = sizes_to_indices.get_mut(&slices) {
+                indices.push(idx);
+            } else {
+                sizes_to_indices.insert(slices, vec![idx]);
+            }
+
+            if slices > largest {
+                largest = slices;
+            }
+        } else {
+            let excess = total_slices + slices - m;
+
+            assert_ne!(largest, 0);
+            for i in excess..=largest.min(slices) {
+                if let Some(indices) = sizes_to_indices.get_mut(&i) {
+                    if !indices.is_empty() {
+                        indices.pop();
+
+                        total_slices += slices - i;
+                        #[cfg(debug_assertions)]
+                        println!("adding {} subbing {}", slices, i);
+
+                        if let Some(indices) = sizes_to_indices.get_mut(&slices) {
+                            indices.push(idx);
+                        } else {
+                            sizes_to_indices.insert(slices, vec![idx]);
+                        }
+
+                        if slices > largest {
+                            largest = slices;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
     }
+
+    let mut types = 0;
+    let mut indices: Vec<usize> = Vec::new();
+    for (_, v) in sizes_to_indices {
+        types += v.len();
+        indices.extend(v.iter());
+    }
+    println!("{}", types);
+    println!(
+        "{}",
+        indices
+            .iter()
+            .map(|n| n.to_string())
+            .collect::<Vec<String>>()
+            .join(" ")
+    );
 }
