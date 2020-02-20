@@ -249,20 +249,27 @@ fn main() {
     let mut to_scan: HashSet<usize> = HashSet::new();
 
     let mut signed: Vec<usize> = Vec::new();
+
+    let mut days_to_signup = 0;
     for day in 0..d {
-        if let Some(idx) = signup_one_lib(
-            &mut libraries,
-            &books_to_scores,
-            &scanned,
-            &mut to_scan,
-            d - day,
-        ) {
-            signed.push(idx);
+        if days_to_signup <= 0 {
+            if let Some(idx) = signup_one_lib(
+                &mut libraries,
+                &books_to_scores,
+                &scanned,
+                &mut to_scan,
+                d - day,
+            ) {
+                signed.push(idx);
+                days_to_signup = libraries[idx].days_to_signup;
+            }
         }
 
         for library in &mut libraries {
             library.process(&mut scanned);
         }
+
+        days_to_signup -= 1;
     }
 
     let mut signed_and_sent = 0;
