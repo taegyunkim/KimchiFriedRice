@@ -122,7 +122,7 @@ fn signup_one_lib(
 ) -> Option<usize> {
     let mut to_signup = libraries
         .iter_mut()
-        .filter(|lib| lib.state() == State::NeedsSignUp)
+        .filter(|lib| lib.state() == State::NeedsSignUp && lib.days_to_signup < days)
         .collect::<Vec<&mut Library>>();
 
     let lib_or_none = to_signup.iter_mut().max_by(|a, b| {
