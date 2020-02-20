@@ -87,21 +87,58 @@ impl Library {
     fn books(&self) -> &[usize] {
         &self.books
     }
+
+    fn signup_approx(
+        &self,
+        books_to_scores: &HashMap<usize, u32>,
+        scanned: &HashSet<usize>,
+        to_scan: &HashSet<usize>,
+        days: usize,
+    ) -> u32 {
+        let mut cnt = 0;
+        let mut books = self.books.clone();
+
+        let mut score = 0;
+        while books.len() > 0 && cnt < (days - self.days_to_signup) * self.ship_rate {
+            let book = books.pop().unwrap();
+            if scanned.contains(&book) || to_scan.contains(&book) {
+                continue;
+            }
+
+            score += books_to_scores.get(&book).unwrap();
+            cnt += 1;
+        }
+
+        score
+    }
 }
 
-fn signup_one_lib(libraries: &mut Vec<Library>, scanned: &HashSet<usize>) -> Option<usize> {
-    for library in libraries {
-        if library.state() == State::NeedsSignUp {
-            for book in library.books() {
-                if !scanned.contains(book) {
-                    // Signup only when the library has a book that has not yet been scanned.
-                    library.signup();
-                    return Some(library.index());
-                }
-            }
+fn signup_one_lib(
+    libraries: &mut Vec<Library>,
+    books_to_scores: &HashMap<usize, u32>,
+    scanned: &HashSet<usize>,
+    to_scan: &mut HashSet<usize>,
+    days: usize,
+) -> Option<usize> {
+    let mut to_signup = libraries
+        .iter_mut()
+        .filter(|lib| lib.state() == State::NeedsSignUp)
+        .collect::<Vec<&mut Library>>();
+
+    let lib_or_none = to_signup.iter_mut().max_by(|a, b| {
+        a.signup_approx(&books_to_scores, &scanned, &to_scan, days)
+            .cmp(&b.signup_approx(&books_to_scores, &scanned, &to_scan, days))
+    });
+
+    match lib_or_none {
+        Some(library) => {
+            library.signup();
+            to_scan.extend(library.books());
+
+            Some(library.index())
         }
+        None => None,
     }
-    return None;
 }
 
 fn main() {
@@ -209,10 +246,17 @@ fn main() {
     libraries.sort_by(|a, b| a.days_to_signup().partial_cmp(&b.days_to_signup()).unwrap());
 
     let mut scanned: HashSet<usize> = HashSet::new();
+    let mut to_scan: HashSet<usize> = HashSet::new();
 
     let mut signed: Vec<usize> = Vec::new();
-    for _ in 0..d {
-        if let Some(idx) = signup_one_lib(&mut libraries, &scanned) {
+    for day in 0..d {
+        if let Some(idx) = signup_one_lib(
+            &mut libraries,
+            &books_to_scores,
+            &scanned,
+            &mut to_scan,
+            d - day,
+        ) {
             signed.push(idx);
         }
 
