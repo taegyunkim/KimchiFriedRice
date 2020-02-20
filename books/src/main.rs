@@ -221,11 +221,19 @@ fn main() {
         }
     }
 
-    println!("{}", signed.len());
-
-    for idx in signed {
+    let mut signed_and_sent = 0;
+    for idx in &signed {
         for library in &libraries {
-            if library.index() == idx {
+            if library.index() == *idx && library.sent().len() > 0 {
+                signed_and_sent += 1;
+            }
+        }
+    }
+    println!("{}", signed_and_sent);
+
+    for idx in &signed {
+        for library in &libraries {
+            if library.index() == *idx {
                 if library.sent().len() > 0 {
                     println!("{} {}", idx, library.sent().len());
 
