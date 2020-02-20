@@ -261,7 +261,7 @@ fn main() {
 
     let mut signed: Vec<usize> = Vec::new();
 
-    let mut days_to_signup = 0;
+    let mut days_to_signup: i32 = 0;
     for day in 0..d {
         if days_to_signup <= 0 {
             if let Some(idx) = signup_one_lib(
@@ -272,7 +272,7 @@ fn main() {
                 d - day,
             ) {
                 signed.push(idx);
-                days_to_signup = libraries[idx].days_to_signup();
+                days_to_signup = libraries[idx].days_to_signup() as i32;
             }
         }
 
