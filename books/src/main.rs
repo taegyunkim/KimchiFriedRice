@@ -139,7 +139,7 @@ fn signup_one_lib(
                     if scanned.contains(book) || to_scan.contains(book) {
                         continue;
                     }
-                    to_scan.insert(book);
+                    to_scan.insert(*book);
                     cnt += 1;
                 } else {
                     break;
@@ -272,7 +272,7 @@ fn main() {
                 d - day,
             ) {
                 signed.push(idx);
-                days_to_signup = libraries[idx].days_to_signup;
+                days_to_signup = libraries[idx].days_to_signup();
             }
         }
 
