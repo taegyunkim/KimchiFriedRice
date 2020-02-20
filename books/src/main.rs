@@ -133,7 +133,18 @@ fn signup_one_lib(
     match lib_or_none {
         Some(library) => {
             library.signup();
-            to_scan.extend(library.books());
+            let mut cnt = 0;
+            for book in library.books() {
+                if cnt < (days - library.days_to_signup) * library.ship_rate {
+                    if scanned.contains(book) || to_scan.contains(book) {
+                        continue;
+                    }
+                    to_scan.insert(book);
+                    cnt += 1;
+                } else {
+                    break;
+                }
+            }
 
             Some(library.index())
         }
@@ -243,7 +254,7 @@ fn main() {
         libraries.push(Library::new(lib_idx, t, m, books));
     }
 
-    libraries.sort_by(|a, b| a.days_to_signup().partial_cmp(&b.days_to_signup()).unwrap());
+    // libraries.sort_by(|a, b| a.days_to_signup().partial_cmp(&b.days_to_signup()).unwrap());
 
     let mut scanned: HashSet<usize> = HashSet::new();
     let mut to_scan: HashSet<usize> = HashSet::new();
